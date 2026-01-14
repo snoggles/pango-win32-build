@@ -37,8 +37,15 @@ done < <(find "patches/cmake/" -mindepth 1 -maxdepth 1 -name "*cmake")
 # create out of src build tree
 mkdir -p build
 while read p; do
-	p=`basename ${p%-*}`
-	mkdir -p "build/$p"
+	p_base=`basename ${p%-*}`
+	mkdir -p "build/$p_base"
+	
+	# Fontconfig MSVC header fix
+	if [[ "$p" == fontconfig-* ]]; then
+		echo "Applying sys/time.h mock for fontconfig"
+		mkdir -p "srcs/$p/win_compat/sys"
+		echo '#include <winsock2.h>' > "srcs/$p/win_compat/sys/time.h"
+	fi
 done < <(ls srcs)
 
 #glib ;_;
