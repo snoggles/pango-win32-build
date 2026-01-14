@@ -33,6 +33,14 @@ jobs:
         with:
           arch: x64
 
+      - name: Rename MSYS2 link.exe
+        shell: msys2 {0}
+        run: |
+          # Rename MSYS2 link.exe to avoid collision with MSVC linker
+          if [ -f /usr/bin/link.exe ]; then
+            mv /usr/bin/link.exe /usr/bin/link-msys.exe
+          fi
+
       - name: Set up Meson and Ninja
         run: |
           python -m pip install --upgrade pip
