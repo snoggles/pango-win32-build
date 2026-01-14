@@ -64,77 +64,61 @@ cd ../../
 
 # Set up toolchain pkgconfig paths
 INSTALL_DIR="$(pwd)/install"
-export PKG_CONFIG_LIBDIR=""
+unset PKG_CONFIG_LIBDIR || true
 export PKG_CONFIG_PATH="$(cygpath -u "$INSTALL_DIR/lib/pkgconfig"):$(cygpath -u "$INSTALL_DIR/share/pkgconfig")"
 echo "Set PKG_CONFIG_PATH to $PKG_CONFIG_PATH"
 
+# Debug: verify glib is found
+pkg-config --exists --print-errors glib-2.0 || echo "Warning: glib-2.0.pc not found in path!"
+
 # apply general patches
 cd srcs
-cat ../patches/*.patch | patch -p0 # apply all patches
+cat ../patches/*.patch | patch -p0 || true # apply all patches
 cd ../
 
+# Helper to run cmake consistently
+run_cmake() {
+    local dir=$1
+    local src=$2
+    shift 2
+    cd "$dir"
+    cmake "$src" \
+        -G 'Ninja' \
+        -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DCMAKE_INSTALL_PREFIX="../../install" \
+        -DPKG_CONFIG_EXECUTABLE=$(which pkg-config) \
+        "$@"
+    ninja install
+    cd ../../
+}
+
 #zlib
-cd build/zlib
-cmake ../../srcs/zlib-*/ \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
+run_cmake "build/zlib" "../../srcs/zlib-*/"
 
 #libpng
-cd ../libpng
-cmake ../../srcs/libpng-*/ \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
+run_cmake "build/libpng" "../../srcs/libpng-*/"
 
 #freetype no hb
-cd ../freetype
-cmake ../../srcs/freetype-*/ \
-    -DWITH_PNG=ON \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
+run_cmake "build/freetype" "../../srcs/freetype-*/" -DWITH_PNG=ON
 
 #harfbuzz (hb-glib required by pango fontconfig/freetype support.)
-cd ../harfbuzz
-cmake ../../srcs/harfbuzz-*/ \
-    -DHB_HAVE_FREETYPE=ON -DHB_HAVE_GLIB=ON \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
+run_cmake "build/harfbuzz" "../../srcs/harfbuzz-*/" -DHB_HAVE_FREETYPE=ON -DHB_HAVE_GLIB=ON
 
 #freetype with hb
-rm -rf ../freetype/*
-cd ../freetype
-cmake ../../srcs/freetype-*/ \
-    -DWITH_PNG=ON -DWITH_HARFBUZZ=ON \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
+rm -rf build/freetype/*
+run_cmake "build/freetype" "../../srcs/freetype-*/" -DWITH_PNG=ON -DWITH_HARFBUZZ=ON
 
 #libexpat
-cd ../libexpat
-cmake ../../srcs/libexpat-*/expat/ \
-    -DBUILD_examples=off -DBUILD_tests=off -DBUILD_shared=OFF \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
+run_cmake "build/libexpat" "../../srcs/libexpat-*/expat/" -DBUILD_examples=off -DBUILD_tests=off -DBUILD_shared=OFF
 
 #fontconfig
-cd ../fontconfig
-cmake ../../srcs/fontconfig-*/ \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
-#ConfigureChecks.cmake, Config.h.cmake
+run_cmake "build/fontconfig" "../../srcs/fontconfig-*/"
 
 #pixman
-cd ../pixman
-cmake ../../srcs/pixman-*/ \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
+run_cmake "build/pixman" "../../srcs/pixman-*/"
 
 #cairo
-cd ../cairo
-cmake ../../srcs/cairo-*/ \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
+run_cmake "build/cairo" "../../srcs/cairo-*/"
 
 #pango
-cd ../pango
-cmake ../../srcs/pango-* \
-    -G 'Ninja' -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=../../install
-ninja install
+run_cmake "build/pango" "../../srcs/pango-*"
