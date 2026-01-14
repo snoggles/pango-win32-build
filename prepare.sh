@@ -143,4 +143,7 @@ run_cmake "build/cairo" "srcs/cairo-*/"
 # Fix strcasecmp on MSVC for pango-view
 sed -i 's/strcasecmp/_stricmp/g' srcs/pango-*/pango-view/viewer-cairo.c
 
+# Fix missing viewer-pangoft2.c in pango-view source list (needed for pangoft2_viewer)
+sed -i 's/viewer-pangocairo.c/viewer-pangocairo.c viewer-pangoft2.c/g' srcs/pango-*/pango-view/CMakeLists.txt
+
 run_cmake "build/pango" "srcs/pango-*/"
