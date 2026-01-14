@@ -61,7 +61,12 @@ cat ../patches/glib*.postpatch | patch -p0 # apply all patches
 cd ../build/glib
 ninja install # required before harfbuzz for pango
 cd ../../
-export PKG_CONFIG_LIBDIR="$(cygpath --unix `pwd`/install/lib/pkgconfig)" # needed for glib
+
+# Set up toolchain pkgconfig paths
+INSTALL_DIR="$(pwd)/install"
+export PKG_CONFIG_LIBDIR=""
+export PKG_CONFIG_PATH="$(cygpath -u "$INSTALL_DIR/lib/pkgconfig"):$(cygpath -u "$INSTALL_DIR/share/pkgconfig")"
+echo "Set PKG_CONFIG_PATH to $PKG_CONFIG_PATH"
 
 # apply general patches
 cd srcs
