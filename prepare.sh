@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eux
+
 # Get all our sources
 mkdir -p dl
 wget -P dl -i download.list
@@ -19,7 +21,14 @@ cd ../../
 # # Add cmake to sources
 while read cm; do
 	p=`basename ${cm%-*}`
-	rsync -a "$cm/" srcs/${p}*.*
+	# Robustly find the target directory to rsync into
+	target=$(find srcs -maxdepth 1 -name "${p}*" -type d | head -n 1)
+	if [ -n "$target" ]; then
+		echo "Applying cmake files to $target"
+		rsync -a "$cm/" "$target/"
+	else
+		echo "Warning: Could not find source directory for $p"
+	fi
 done < <(find "patches/cmake/" -mindepth 1 -maxdepth 1 -name "*cmake")
 
 # create out of src build tree
