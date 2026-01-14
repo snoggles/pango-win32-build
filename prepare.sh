@@ -140,4 +140,7 @@ run_cmake "build/pixman" "srcs/pixman-*/"
 run_cmake "build/cairo" "srcs/cairo-*/"
 
 #pango
+# Fix strcasecmp on MSVC for pango-view
+sed -i 's/strcasecmp/_stricmp/g' srcs/pango-*/pango-view/viewer-cairo.c
+
 run_cmake "build/pango" "srcs/pango-*/"
