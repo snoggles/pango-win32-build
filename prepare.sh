@@ -1,5 +1,6 @@
 #!/bin/bash
 
+export MSYS="winsymlinks:lnk"
 set -eux
 
 # Get all our sources
@@ -9,7 +10,7 @@ wget -P dl -i download.list
 # #Untar them all
 mkdir -p srcs
 while read f; do
-	tar -xvf "$f" -C srcs
+	tar --no-same-owner -xvf "$f" -C srcs
 done < <(find ./dl -type f)
 
 # #clone cmake repos
