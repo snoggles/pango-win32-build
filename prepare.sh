@@ -65,7 +65,7 @@ cd ../../
 # Set up toolchain pkgconfig paths
 INSTALL_DIR="$(pwd)/install"
 unset PKG_CONFIG_LIBDIR || true
-export PKG_CONFIG_PATH="$(cygpath -u "$INSTALL_DIR/lib/pkgconfig"):$(cygpath -u "$INSTALL_DIR/share/pkgconfig")"
+export PKG_CONFIG_PATH="$(cygpath -m "$INSTALL_DIR/lib/pkgconfig"):$(cygpath -m "$INSTALL_DIR/share/pkgconfig")"
 echo "Set PKG_CONFIG_PATH to $PKG_CONFIG_PATH"
 
 # Debug: verify glib is found
@@ -105,7 +105,7 @@ run_cmake() {
         -G 'Ninja' \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
         -DCMAKE_INSTALL_PREFIX="$inst_abs" \
-        -DPKG_CONFIG_EXECUTABLE=$(which pkg-config) \
+        -DPKG_CONFIG_EXECUTABLE=$(cygpath -m $(which pkg-config)) \
         "$@"
     ninja install
     popd > /dev/null
