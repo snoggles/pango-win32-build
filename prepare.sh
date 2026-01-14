@@ -78,47 +78,66 @@ cd ../
 
 # Helper to run cmake consistently
 run_cmake() {
-    local dir=$1
-    local src=$2
+    local build_dir=$1
+    local src_pattern=$2
     shift 2
-    cd "$dir"
-    cmake "$src" \
+
+    # Expand the pattern relative to ROOT (current directory)
+    # We must NOT quote the pattern here to allow shell expansion
+    local expanded=( $src_pattern )
+    local src_path="${expanded[0]}"
+
+    if [ ! -d "$src_path" ]; then
+        echo "Error: Source directory $src_path (expanded from $src_pattern) not found!"
+        exit 1
+    fi
+
+    local src_abs=$(cygpath -m "$(realpath "$src_path")")
+    local inst_abs=$(cygpath -m "$INSTALL_DIR")
+    
+    echo "--- Building $build_dir ---"
+    echo "Source: $src_abs"
+    echo "Install Prefix: $inst_abs"
+
+    mkdir -p "$build_dir"
+    pushd "$build_dir" > /dev/null
+    cmake "$src_abs" \
         -G 'Ninja' \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-        -DCMAKE_INSTALL_PREFIX="../../install" \
+        -DCMAKE_INSTALL_PREFIX="$inst_abs" \
         -DPKG_CONFIG_EXECUTABLE=$(which pkg-config) \
         "$@"
     ninja install
-    cd ../../
+    popd > /dev/null
 }
 
 #zlib
-run_cmake "build/zlib" "../../srcs/zlib-*/"
+run_cmake "build/zlib" "srcs/zlib-*/"
 
 #libpng
-run_cmake "build/libpng" "../../srcs/libpng-*/"
+run_cmake "build/libpng" "srcs/libpng-*/"
 
 #freetype no hb
-run_cmake "build/freetype" "../../srcs/freetype-*/" -DWITH_PNG=ON
+run_cmake "build/freetype" "srcs/freetype-*/" -DWITH_PNG=ON
 
 #harfbuzz (hb-glib required by pango fontconfig/freetype support.)
-run_cmake "build/harfbuzz" "../../srcs/harfbuzz-*/" -DHB_HAVE_FREETYPE=ON -DHB_HAVE_GLIB=ON
+run_cmake "build/harfbuzz" "srcs/harfbuzz-*/" -DHB_HAVE_FREETYPE=ON -DHB_HAVE_GLIB=ON
 
 #freetype with hb
 rm -rf build/freetype/*
-run_cmake "build/freetype" "../../srcs/freetype-*/" -DWITH_PNG=ON -DWITH_HARFBUZZ=ON
+run_cmake "build/freetype" "srcs/freetype-*/" -DWITH_PNG=ON -DWITH_HARFBUZZ=ON
 
 #libexpat
-run_cmake "build/libexpat" "../../srcs/libexpat-*/expat/" -DBUILD_examples=off -DBUILD_tests=off -DBUILD_shared=OFF
+run_cmake "build/libexpat" "srcs/libexpat-*/expat/" -DBUILD_examples=off -DBUILD_tests=off -DBUILD_shared=OFF
 
 #fontconfig
-run_cmake "build/fontconfig" "../../srcs/fontconfig-*/"
+run_cmake "build/fontconfig" "srcs/fontconfig-*/"
 
 #pixman
-run_cmake "build/pixman" "../../srcs/pixman-*/"
+run_cmake "build/pixman" "srcs/pixman-*/"
 
 #cairo
-run_cmake "build/cairo" "../../srcs/cairo-*/"
+run_cmake "build/cairo" "srcs/cairo-*/"
 
 #pango
-run_cmake "build/pango" "../../srcs/pango-*"
+run_cmake "build/pango" "srcs/pango-*/"
