@@ -5,7 +5,9 @@ set -eux
 
 # Get all our sources
 mkdir -p dl
-wget -P dl -i download.list
+tr -d '\r' < download.list > download.list.tmp
+wget -P dl -i download.list.tmp
+rm download.list.tmp
 
 # #Untar them all
 mkdir -p srcs
@@ -16,7 +18,7 @@ done < <(find ./dl -type f)
 # #clone cmake repos
 mkdir -p "patches/cmake"
 cd "patches/cmake"
-while read f; do git clone "$f"; done < ../../cmakelists.list
+while read f; do git clone "$f"; done < <(tr -d '\r' < ../../cmakelists.list)
 cd ../../
 
 # # Add cmake to sources
